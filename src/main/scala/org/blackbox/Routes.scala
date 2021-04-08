@@ -2,8 +2,10 @@ package org.blackbox
 
 import cats.data.Kleisli
 import cats.effect.concurrent.Ref
+import cats.instances.all._
 import cats.syntax.functor._
-import cats.{Defer, Monad, Monoid}
+import cats.syntax.semigroup._
+import cats.{Defer, Monad}
 import io.circe.generic.auto._
 import io.circe.{Encoder, Printer}
 import org.blackbox.Routes.EventMetric
@@ -30,8 +32,7 @@ sealed abstract class Routes[F[_]](state: Ref[F, State], windowSize: FiniteDurat
                   eventType = eventType,
                   validFrom = wordsFrequency.firstKey,
                   validTo = wordsFrequency.firstKey + windowSize.toSeconds,
-                  wordFrequency =
-                    wordsFrequency.values.foldLeft(Map.empty[String, Int])(Monoid[Map[String, Int]].combine)
+                  wordFrequency = wordsFrequency.values.foldLeft(Map.empty[String, Int])(_ |+| _)
                 )
             }.toSeq
             Response(
