@@ -25,14 +25,14 @@ sealed abstract class Routes[F[_]](state: Ref[F, State], windowSize: FiniteDurat
     HttpRoutes
       .of[F] {
         case GET -> Root / "metrics" =>
-          state.get.map { state =>
-            val metrics = state.map {
+          state.get.map { st =>
+            val metrics = st.map {
               case (eventType, wordsFrequency) =>
                 EventMetric(
                   eventType = eventType,
                   validFrom = wordsFrequency.firstKey,
                   validTo = wordsFrequency.firstKey + windowSize.toSeconds,
-                  wordFrequency = wordsFrequency.values.foldLeft(Map.empty[String, Int])(_ |+| _)
+                  wordFrequency = wordsFrequency.values.reduce(_ |+| _)
                 )
             }.toSeq
             Response(

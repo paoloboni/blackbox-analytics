@@ -28,10 +28,10 @@ sealed abstract class DataProcessor[F[_]](state: Ref[F, State], windowSize: Fini
           Stream
             .chunk(events)
             .map(e => SortedMap(e.timestamp -> Map(e.data -> 1)))
-            .foldMonoid[SortedMap[Long, Map[String, Int]]]
+            .foldMonoid
             .evalMap { increment: SortedMap[Long, Map[String, Int]] =>
-              state.getAndUpdate { state =>
-                state.updatedWith(eventType) { eventTypeState =>
+              state.getAndUpdate { st =>
+                st.updatedWith(eventType) { eventTypeState =>
                   val updated = eventTypeState.fold(increment)(_ |+| increment)
                   Some(updated.rangeFrom(updated.lastKey - windowSize.toSeconds + 1))
                 }
